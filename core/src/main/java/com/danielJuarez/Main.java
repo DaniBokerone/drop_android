@@ -20,6 +20,8 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class Main implements ApplicationListener {
     Texture backgroundTexture;
+    Texture gameOverBackgroundTexture;
+
     Texture bucketTexture;
     Texture dropTexture;
     Sound dropSound;
@@ -49,7 +51,8 @@ public class Main implements ApplicationListener {
 
     @Override
     public void create() {
-        backgroundTexture = new Texture("background.png");
+        backgroundTexture = new Texture("background_2.jpg");
+        gameOverBackgroundTexture = new Texture("gameOver.jpg");
         bucketTexture = new Texture("bucket.png");
         dropTexture = new Texture("drop.png");
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
@@ -171,6 +174,9 @@ public class Main implements ApplicationListener {
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
         spriteBatch.begin();
         if (gameOver) {
+            spriteBatch.draw(gameOverBackgroundTexture, 0, 0, viewport.getWorldWidth(), viewport.getWorldHeight());
+
+
             font.getData().setScale(0.1f);
 
             // GAME OVER
