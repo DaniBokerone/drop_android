@@ -38,6 +38,15 @@ public class Main implements ApplicationListener {
     BitmapFont font;
     GlyphLayout layout;
 
+    //Game over
+    boolean gameOver;
+    Sound gameOverSound;
+
+    //Restart
+    Texture restartTexture;
+    Sprite restartButton;
+
+
     @Override
     public void create() {
         backgroundTexture = new Texture("background.png");
@@ -64,6 +73,16 @@ public class Main implements ApplicationListener {
         font.setColor(Color.WHITE);
         font.getData().setScale(0.1f);
         layout = new GlyphLayout();
+
+        //Game Over
+        gameOverSound = Gdx.audio.newSound(Gdx.files.internal("gameOver.mp3"));
+        gameOver = false;
+
+        //Restart
+        restartTexture = new Texture("restart.png");
+        restartButton = new Sprite(restartTexture);
+        restartButton.setSize(8, 4);
+        restartButton.setPosition((viewport.getWorldWidth() - restartButton.getWidth()) / 2, viewport.getWorldHeight() / 3);
     }
 
     @Override
@@ -93,9 +112,20 @@ public class Main implements ApplicationListener {
             viewport.unproject(touchPos);
             bucketSprite.setCenterX(touchPos.x);
         }
+
+        if (gameOver && Gdx.input.isTouched()) {
+            Vector2 touch = new Vector2(Gdx.input.getX(), Gdx.input.getY());
+            viewport.unproject(touch);
+
+            if (restartButton.getBoundingRectangle().contains(touch)) {
+                restartGame();
+            }
+        }
     }
 
     private void logic() {
+        if (gameOver) return;
+
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
         float bucketWidth = bucketSprite.getWidth();
@@ -114,8 +144,13 @@ public class Main implements ApplicationListener {
             dropSprite.translateY(-6f * delta);
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropWidth, dropHeight);
 
-            if (dropSprite.getY() < -dropHeight)
+            if (dropSprite.getY() < -dropHeight) {
                 dropSprites.removeIndex(i);
+                gameOver = true;
+                gameOverSound.play();
+                music.stop();
+                break;
+            }
             else if (bucketRectangle.overlaps(dropRectangle)) {
                 dropSprites.removeIndex(i);
                 dropSound.play();
@@ -135,19 +170,40 @@ public class Main implements ApplicationListener {
         viewport.apply();
         spriteBatch.setProjectionMatrix(viewport.getCamera().combined);
         spriteBatch.begin();
+        if (gameOver) {
+            font.getData().setScale(0.1f);
 
-        float worldWidth = viewport.getWorldWidth();
-        float worldHeight = viewport.getWorldHeight();
+            // GAME OVER
+            String gameOverText = "GAME OVER";
+            layout.setText(font, gameOverText);
+            font.draw(spriteBatch, layout,
+                (viewport.getWorldWidth() - layout.width) / 2,
+                viewport.getWorldHeight() * 0.8f);
 
-        spriteBatch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
-        bucketSprite.draw(spriteBatch);
+            // SCORE
+            String scoreText = "SCORE " + score;
+            layout.setText(font, scoreText);
+            font.draw(spriteBatch, layout,
+                (viewport.getWorldWidth() - layout.width) / 2,
+                viewport.getWorldHeight() * 0.7f);
 
-        for (Sprite dropSprite : dropSprites) {
-            dropSprite.draw(spriteBatch);
+            restartButton.draw(spriteBatch);
+        }else {
+
+            float worldWidth = viewport.getWorldWidth();
+            float worldHeight = viewport.getWorldHeight();
+
+            spriteBatch.draw(backgroundTexture, 0, 0, worldWidth, worldHeight);
+            bucketSprite.draw(spriteBatch);
+
+            for (Sprite dropSprite : dropSprites) {
+                dropSprite.draw(spriteBatch);
+            }
+
+            layout.setText(font, "Score - " + score);
+            font.draw(spriteBatch, layout, 0.5f, worldHeight - 0.5f);
+
         }
-
-        layout.setText(font, "Score - " + score);
-        font.draw(spriteBatch, layout, 0.5f, worldHeight - 0.5f);
 
         spriteBatch.end();
     }
@@ -174,6 +230,14 @@ public class Main implements ApplicationListener {
     public void resume() {
 
     }
+    private void restartGame() {
+        gameOver = false;
+        score = 0;
+        dropSprites.clear();
+        bucketSprite.setPosition(viewport.getWorldWidth() / 2 - bucketSprite.getWidth() / 2, 0);
+        music.play();
+    }
+
 
     @Override
     public void dispose() {
