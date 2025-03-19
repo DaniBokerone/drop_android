@@ -7,6 +7,8 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
@@ -31,6 +33,11 @@ public class Main implements ApplicationListener {
     Rectangle bucketRectangle;
     Rectangle dropRectangle;
 
+    // Puntuacio
+    int score;
+    BitmapFont font;
+    GlyphLayout layout;
+
     @Override
     public void create() {
         backgroundTexture = new Texture("background.png");
@@ -39,9 +46,9 @@ public class Main implements ApplicationListener {
         dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.mp3"));
         music = Gdx.audio.newMusic(Gdx.files.internal("music.mp3"));
         spriteBatch = new SpriteBatch();
-        viewport = new FitViewport(8, 5);
+        viewport = new FitViewport(32, 20);
         bucketSprite = new Sprite(bucketTexture);
-        bucketSprite.setSize(1, 1);
+        bucketSprite.setSize(4, 4);
         touchPos = new Vector2();
         dropSprites = new Array<>();
         bucketRectangle = new Rectangle();
@@ -49,6 +56,14 @@ public class Main implements ApplicationListener {
         music.setLooping(true);
         music.setVolume(.5f);
         music.play();
+
+        // Puntuacio
+        score = 0;
+
+        font = new BitmapFont();
+        font.setColor(Color.WHITE);
+        font.getData().setScale(0.1f);
+        layout = new GlyphLayout();
     }
 
     @Override
@@ -96,13 +111,15 @@ public class Main implements ApplicationListener {
             float dropWidth = dropSprite.getWidth();
             float dropHeight = dropSprite.getHeight();
 
-            dropSprite.translateY(-2f * delta);
+            dropSprite.translateY(-6f * delta);
             dropRectangle.set(dropSprite.getX(), dropSprite.getY(), dropWidth, dropHeight);
 
-            if (dropSprite.getY() < -dropHeight) dropSprites.removeIndex(i);
+            if (dropSprite.getY() < -dropHeight)
+                dropSprites.removeIndex(i);
             else if (bucketRectangle.overlaps(dropRectangle)) {
                 dropSprites.removeIndex(i);
                 dropSound.play();
+                score++;
             }
         }
 
@@ -129,12 +146,15 @@ public class Main implements ApplicationListener {
             dropSprite.draw(spriteBatch);
         }
 
+        layout.setText(font, "Score - " + score);
+        font.draw(spriteBatch, layout, 0.5f, worldHeight - 0.5f);
+
         spriteBatch.end();
     }
 
     private void createDroplet() {
-        float dropWidth = 1;
-        float dropHeight = 1;
+        float dropWidth = 3;
+        float dropHeight = 3;
         float worldWidth = viewport.getWorldWidth();
         float worldHeight = viewport.getWorldHeight();
 
